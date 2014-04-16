@@ -34,10 +34,17 @@
   with_items: elasticsearch_apt_dependencies
 
 # Configure user and group
-- name: Configuring user and group
+# Configure user and group
+- name: create group
   sudo: true
   group: name={{ elasticsearch_group }}
-- user: name={{ elasticsearch_user }} group={{ elasticsearch_group }} createhome=no
+
+- name: create user
+  sudo: true
+  user: >
+    name={{ elasticsearch_user }}
+    group={{ elasticsearch_group }}
+    createhome=no
 
 # Check whether we have aleady installed the same version
 - shell: if [ -e /usr/share/elasticsearch/lib/elasticsearch-{{ elasticsearch_version }}.jar ]; then echo yes; else echo no; fi;
@@ -50,6 +57,7 @@
 
 # Uninstall previous version if applicable
 - name: Uninstalling previous version if applicable
+  sudo: true
   shell: dpkg --remove elasticsearch
   when: version_exists.stdout == 'no'
 - file: path=/usr/share/elasticsearch state=absent
@@ -57,6 +65,7 @@
 
 # Install the deb
 - name: Install Elasticsearch deb
+  sudo: true
   shell: dpkg -i -E --force-confnew /tmp/elasticsearch-{{ elasticsearch_version }}.deb
   when: version_exists.stdout == 'no'
 - file: path=/usr/share/elasticsearch state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
