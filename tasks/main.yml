@@ -3,6 +3,7 @@
 
 # Configure timezone
 - name: Configuring timezone
+  sudo: true
   shell: echo {{ elasticsearch_timezone }} > /etc/timezone; dpkg-reconfigure --frontend noninteractive tzdata
 
 # Update repos
