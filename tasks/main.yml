@@ -34,16 +34,10 @@
   with_items: elasticsearch_apt_dependencies
 
 # Configure user and group
-- name: Configuring group
+- name: Configuring user and group
   sudo: true
   group: name={{ elasticsearch_group }}
-
-- name: Configuring user
-  sudo: true
-  user: >
-    name={{ elasticsearch_user }}
-    group={{ elasticsearch_group }}
-    createhome=no
+- user: name={{ elasticsearch_user }} group={{ elasticsearch_group }} createhome=no
 
 # Check whether we have aleady installed the same version
 - shell: if [ -e /usr/share/elasticsearch/lib/elasticsearch-{{ elasticsearch_version }}.jar ]; then echo yes; else echo no; fi;
