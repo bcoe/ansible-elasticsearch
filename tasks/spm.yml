@@ -3,6 +3,7 @@
 
 # Install Collectd
 - name: Install Collectd
+  sudo: true
   apt: pkg=collectd state=present
 
 # Download package
