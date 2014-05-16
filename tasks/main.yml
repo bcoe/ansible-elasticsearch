@@ -3,12 +3,16 @@
 
 # Configure timezone
 - name: Configuring timezone
+  sudo: true
   shell: echo {{ elasticsearch_timezone }} > /etc/timezone; dpkg-reconfigure --frontend noninteractive tzdata
 
 # Update repos
 - name: Install python-software-properties
+  sudo: true
   apt: pkg=python-software-properties state=present update_cache=yes cache_valid_time={{apt_cache_valid_time}}
+
 - name: Update repositories
+  sudo: true
   apt_repository: repo={{ item }} state=present update_cache=yes
   with_items: elasticsearch_apt_repos
 
@@ -19,18 +23,15 @@
 
 # Install Java
 - name: Install dependencies
+  sudo: true
   apt: pkg={{elasticsearch_apt_java_package}} state=present
   when: elasticsearch_install_java
 
 # Install dependencies
 - name: Install dependencies
+  sudo: true
   apt: pkg={{ item }} state=present
   with_items: elasticsearch_apt_dependencies
-
-# Configure user and group
-- name: Configuring user and group
-  group: name={{ elasticsearch_group }}
-- user: name={{ elasticsearch_user }} group={{ elasticsearch_group }} createhome=no
 
 # Check whether we have aleady installed the same version
 - shell: if [ -e /usr/share/elasticsearch/lib/elasticsearch-{{ elasticsearch_version }}.jar ]; then echo yes; else echo no; fi;
@@ -43,6 +44,7 @@
 
 # Uninstall previous version if applicable
 - name: Uninstalling previous version if applicable
+  sudo: true
   shell: dpkg --remove elasticsearch
   when: version_exists.stdout == 'no'
 - file: path=/usr/share/elasticsearch state=absent
@@ -50,43 +52,74 @@
 
 # Install the deb
 - name: Install Elasticsearch deb
+  sudo: true
   shell: dpkg -i -E --force-confnew /tmp/elasticsearch-{{ elasticsearch_version }}.deb
   when: version_exists.stdout == 'no'
+
 - file: path=/usr/share/elasticsearch state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
+  sudo: true
 
 # Configure directories
 - name: Configuring directories
   file: path={{ elasticsearch_log_dir }} state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
   when: elasticsearch_log_dir is defined
+  sudo: true
+
 - file: path={{ elasticsearch_data_dir }} state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
   when: elasticsearch_data_dir is defined
+  sudo: true
+
 - file: path={{ elasticsearch_work_dir }} state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
   when: elasticsearch_work_dir is defined
+  sudo: true
+
 - file: path={{ elasticsearch_conf_dir }} state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
   when: elasticsearch_conf_dir is defined
+  sudo: true
+
 - file: path={{ elasticsearch_plugin_dir }} state=absent
   when: elasticsearch_plugin_dir is defined
+  sudo: true
+
 - file: path={{ elasticsearch_plugin_dir }} state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
   when: elasticsearch_plugin_dir is defined
+  sudo: true
 
 # Configure open file limits
 - name: Configuring open file limits
+  sudo: true
   shell: "echo Configuring open file limits"
+
 - lineinfile: dest=/etc/security/limits.conf regexp='^{{ elasticsearch_user }}     -    nofile    {{ elasticsearch_max_open_files }}' insertafter=EOF line='{{ elasticsearch_user }}     -    nofile    {{ elasticsearch_max_open_files }}'
   when: elasticsearch_max_open_files is defined
+  sudo: true
+
 - lineinfile: dest=/etc/security/limits.conf regexp='^{{ elasticsearch_user }}     -    memlock   {{ elasticsearch_max_locked_memory }}' insertafter=EOF line='{{ elasticsearch_user }}     -    memlock   {{ elasticsearch_max_locked_memory }}'
   when: elasticsearch_max_locked_memory is defined
+  sudo: true
 - lineinfile: dest=/etc/pam.d/su regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+  sudo: true
+
 - lineinfile: dest=/etc/pam.d/common-session regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+  sudo: true
+
 - lineinfile: dest=/etc/pam.d/common-session-noninteractive regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+  sudo: true
+
 - lineinfile: dest=/etc/pam.d/sudo regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+  sudo: true
+
 - lineinfile: dest=/etc/init.d/elasticsearch regexp='^(DAEMON_OPTS=".*-Des.max-open-files=true")$' insertafter='^(DAEMON_OPTS=".*CONF_DIR")$' line='DAEMON_OPTS="$DAEMON_OPTS -Des.max-open-files=true"'
+  sudo: true
 
 # Configure Elasticsearch Node
 - name: Configuring Elasticsearch Node
+  sudo: true
   template: src=elasticsearch.yml.j2 dest={{ elasticsearch_conf_dir }}/elasticsearch.yml owner={{ elasticsearch_user }} group={{ elasticsearch_group }} mode=0644
   when: elasticsearch_conf_dir is defined
+
 - template: src=elasticsearch.default.j2 dest=/etc/default/elasticsearch owner={{ elasticsearch_user }} group={{ elasticsearch_group }} mode=0644
+  sudo: true
 
 # Install AWS Plugin
 - include: aws.yml
@@ -106,4 +139,5 @@
 
 # Restart Elasticsearch
 - name: Restarting Elasticsearch
+  sudo: true
   service: name=elasticsearch state=restarted
