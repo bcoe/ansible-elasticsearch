@@ -539,4 +539,4 @@ action.disable_delete_all_indices: {{ elasticsearch_misc_disable_delete_all_indi
 {% endif %}
 
 # http://bouk.co/blog/elasticsearch-rce/
-script.disable_dynamic: true
+script.disable_dynamic: {{elasticsearch_disable_dynamic | default(false)}}
