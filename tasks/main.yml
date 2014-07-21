@@ -47,7 +47,9 @@
   sudo: true
   shell: dpkg --remove elasticsearch
   when: version_exists.stdout == 'no'
+
 - file: path=/usr/share/elasticsearch state=absent
+  sudo: true
   when: version_exists.stdout == 'no'
 
 # Install the deb
